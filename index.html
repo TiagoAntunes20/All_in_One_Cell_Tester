@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>All In One Assistech — Tester</title>
+<link rel="icon" type="image/png" href="logo.png">
+<style>
+  :root{
+    --black: #0B0B0C;
+    --white: #FAFAF8;
+    --paper: #F1EFEA;
+    --line: #E3E0D9;
+    --line-dark: #29292c;
+    --gray: #6B6B70;
+    --orange: #E85D1A;
+    --orange-dark: #B84713;
+  }
+  *{ box-sizing: border-box; margin: 0; padding: 0; }
+  html, body{ height: 100%; }
+  body{
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    color: var(--black);
+    overflow: hidden;
+  }
+
+  .screen{
+    position: fixed; inset: 0;
+    display: flex; flex-direction: column;
+    opacity: 0; transform: translateY(8px); pointer-events: none;
+    transition: opacity 0.28s ease, transform 0.28s ease;
+    overflow-y: auto;
+  }
+  .screen.is-active{ opacity: 1; transform: translateY(0); pointer-events: auto; }
+  .screen--light{ background: var(--white); }
+  .screen--dark{ background: var(--black); color: var(--white); }
+
+  .brandbar{
+    display: flex; align-items: center; gap: 10px;
+    padding: 24px 32px;
+    border-bottom: 1px solid var(--line);
+  }
+  .brandbar--dark{ border-bottom-color: var(--line-dark); }
+  .brandbar__logo{ height: 36px; width: auto; display: block; }
+  .brandbar__name{ font-size: 13px; color: var(--gray); font-weight: 500; }
+  .brandbar--dark .brandbar__name{ color: #9a9a9e; }
+
+  .hero{
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; text-align: center;
+    padding: 32px;
+  }
+  .hero__eyebrow{ font-size: 14px; color: var(--gray); margin-bottom: 14px; }
+  .hero__title{ font-size: clamp(34px, 6vw, 56px); font-weight: 700; letter-spacing: -0.5px; margin-bottom: 16px; }
+  .hero__subtitle{ font-size: 16px; color: var(--gray); max-width: 440px; line-height: 1.5; margin-bottom: 40px; }
+
+  .btn{
+    font-family: inherit; font-weight: 600; border: none; cursor: pointer; border-radius: 6px;
+  }
+  .btn--primary{ background: var(--orange); color: var(--white); }
+  .btn--primary:hover{ background: var(--orange-dark); }
+  .btn--lg{ font-size: 17px; padding: 18px 48px; }
+  .btn--ghost{
+    background: transparent; color: #9a9a9e; font-size: 14px;
+    padding: 10px 18px; border: 1px solid var(--line-dark); border-radius: 6px;
+  }
+  .btn--ghost:hover{ color: var(--white); border-color: #4a4a4e; }
+
+  .qrwrap{ flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 32px; }
+  .qrwrap__eyebrow{ font-size: 14px; color: var(--orange); font-weight: 600; margin-bottom: 10px; }
+  .qrwrap__title{ font-size: clamp(22px, 3vw, 28px); font-weight: 600; margin-bottom: 32px; }
+  .qrcard{ background: var(--white); padding: 20px; border-radius: 10px; display: inline-flex; margin-bottom: 22px; box-shadow: 0 0 0 1px var(--line-dark); }
+  .qrcard canvas{ display: block; }
+  .qrwrap__session{ font-family: ui-monospace, "SFMono-Regular", Menlo, monospace; font-size: 14px; color: #9a9a9e; margin-bottom: 26px; }
+  .qrwrap__session span{ color: var(--white); }
+  .qrwrap__status{ display: flex; align-items: center; gap: 10px; font-size: 14px; color: #9a9a9e; margin-bottom: 36px; }
+  .pulse-dot{ width: 8px; height: 8px; border-radius: 50%; background: var(--orange); animation: pulse 1.4s ease-in-out infinite; }
+  @keyframes pulse{ 0%,100%{opacity:1;transform:scale(1);} 50%{opacity:.35;transform:scale(.8);} }
+</style>
+</head>
+<body>
+
+<section id="screen-start" class="screen screen--light is-active">
+  <header class="brandbar">
+    <img class="brandbar__logo" src="logo.png" alt="All In One Assistech">
+    <span class="brandbar__name">All In One Assistech</span>
+  </header>
+  <div class="hero">
+    <p class="hero__eyebrow">Diagnóstico de smartphones</p>
+    <h1 class="hero__title">Tester</h1>
+    <p class="hero__subtitle">Suíte de testes de bancada — sem geração de OS. Toque em Iniciar Teste e escaneie o QR com o celular.</p>
+    <button id="btn-start" class="btn btn--primary btn--lg">▶ Iniciar Teste</button>
+  </div>
+</section>
+
+<section id="screen-qr" class="screen screen--dark">
+  <header class="brandbar brandbar--dark">
+    <img class="brandbar__logo" src="logo.png" alt="All In One Assistech">
+    <span class="brandbar__name">All In One Assistech</span>
+  </header>
+  <div class="qrwrap">
+    <p class="qrwrap__eyebrow">Teste de diagnóstico</p>
+    <h1 class="qrwrap__title">Escaneie o QR Code com o celular</h1>
+    <div class="qrcard"><canvas id="qr-canvas" width="240" height="240"></canvas></div>
+    <p class="qrwrap__session">/teste/<span id="session-code">------</span></p>
+    <p class="qrwrap__status"><span class="pulse-dot"></span>Abra o menu de testes no celular</p>
+    <button id="btn-cancel" class="btn btn--ghost">Cancelar</button>
+  </div>
+</section>
+
+<script src="vendor.qrcode.js"></script>
+<script>
+(function () {
+  const screenStart = document.getElementById('screen-start');
+  const screenQr = document.getElementById('screen-qr');
+  const btnStart = document.getElementById('btn-start');
+  const btnCancel = document.getElementById('btn-cancel');
+  const sessionCodeEl = document.getElementById('session-code');
+  const qrCanvas = document.getElementById('qr-canvas');
+
+  function generateSessionCode(length = 5) {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let code = '';
+    for (let i = 0; i < length; i++) code += chars[Math.floor(Math.random() * chars.length)];
+    return code;
+  }
+
+  function goTo(show, hide) { hide.classList.remove('is-active'); show.classList.add('is-active'); }
+
+  function startSession() {
+    const code = generateSessionCode();
+    sessionCodeEl.textContent = code;
+    goTo(screenQr, screenStart);
+
+    const sessionUrl = new URL(`menu.html?session=${code}`, window.location.href).href;
+
+    if (typeof QRCode === 'undefined') {
+      console.error('Lib QRCode não carregou — confira se vendor.qrcode.js está na mesma pasta.');
+      return;
+    }
+    QRCode.toCanvas(qrCanvas, sessionUrl, {
+      width: 220, margin: 1, color: { dark: '#0B0B0C', light: '#FAFAF8' }
+    }, function (err) { if (err) console.error('Erro ao gerar QR code:', err); });
+  }
+
+  function cancelSession() { goTo(screenStart, screenQr); }
+
+  btnStart.addEventListener('click', startSession);
+  btnCancel.addEventListener('click', cancelSession);
+})();
+</script>
+</body>
+</html>
